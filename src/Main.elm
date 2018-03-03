@@ -22,26 +22,25 @@ type alias Slide =
     }
 
 
-type alias Model =
-    { current : Slide
-    , next : List Slide
-    , prev : List Slide
-    }
+type Model
+    = Model Slide (List Slide) (List Slide)
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { next =
-            [ { title = "Hello Slides!"
-              , body = "These slides are record types."
-              }
-            , { title = "Slide two"
-              , body = "Not sure how I feel about that."
-              }
-            ]
-      , current = { title = "Slide one", body = "" }
-      , prev = []
-      }
+    ( (Model
+        { title = "Slide one"
+        , body = "This is the first slide"
+        }
+        [ { title = "Hello Slides!"
+          , body = "These slides are record types."
+          }
+        , { title = "Slide two"
+          , body = "Not sure how I feel about that."
+          }
+        ]
+        []
+      )
     , Cmd.none
     )
 
@@ -55,42 +54,61 @@ type Msg
     | Prev
 
 
+flip : Model -> Model
+flip model =
+    let
+        (Model x n p) =
+            model
+    in
+        (Model x p n)
+
+
 prevSlide : Model -> Model
 prevSlide model =
-    case model.prev of
-        x :: xs ->
-            { model
-                | prev = xs
-                , current = x
-                , next = model.current :: model.next
-            }
-
-        [] ->
-            model
+    model
+        |> flip
+        |> nextSlide
+        |> flip
 
 
 nextSlide : Model -> Model
 nextSlide model =
-    case model.next of
-        x :: xs ->
-            { model
-                | next = xs
-                , current = x
-                , prev = model.current :: model.prev
-            }
-
-        [] ->
+    let
+        (Model current next prev) =
             model
+    in
+        case next of
+            x :: xs ->
+                (Model x xs (current :: prev))
+
+            [] ->
+                model
+
+
+lift : (Model -> Model) -> Model -> ( Model, Cmd Msg )
+lift f m =
+    ( f m, Cmd.none )
+
+
+(>=) : Model -> (Model -> Model) -> ( Model, Cmd Msg )
+(>=) m f =
+    (lift f) m
+
+
+advance : Msg -> Model -> Model
+advance msg model =
+    case msg of
+        Next ->
+            nextSlide model
+
+        Prev ->
+            prevSlide model
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case msg of
-        Next ->
-            ( nextSlide model, Cmd.none )
-
-        Prev ->
-            ( prevSlide model, Cmd.none )
+    model
+        >= advance msg
 
 
 
@@ -99,13 +117,17 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ h1 [] [ text model.current.title ]
-        , div [] [ text model.current.body ]
-        , a [ href "#", onClick Prev ] [ text "Prev" ]
-        , text " "
-        , a [ href "#", onClick Next ] [ text "Next" ]
-        ]
+    let
+        (Model current _ _) =
+            model
+    in
+        div []
+            [ h1 [] [ text current.title ]
+            , div [] [ text current.body ]
+            , a [ href "#", onClick Prev ] [ text "Prev" ]
+            , text " "
+            , a [ href "#", onClick Next ] [ text "Next" ]
+            ]
 
 
 
