@@ -1,19 +1,49 @@
 module Main exposing (..)
 
-import Html exposing (Html, text, div, h1, img)
-import Html.Attributes exposing (src)
+import Html
+    exposing
+        ( Html
+        , a
+        , div
+        , h1
+        , img
+        , text
+        )
+import Html.Events exposing (onClick)
+import Html.Attributes exposing (href)
 
 
 ---- MODEL ----
 
 
+type alias Slide =
+    { title : String
+    , body : String
+    }
+
+
 type alias Model =
-    {}
+    { current : Slide
+    , next : List Slide
+    , prev : List Slide
+    }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( {}, Cmd.none )
+    ( { next =
+            [ { title = "Hello Slides!"
+              , body = "These slides are record types."
+              }
+            , { title = "Slide two"
+              , body = "Not sure how I feel about that."
+              }
+            ]
+      , current = { title = "Slide one", body = "" }
+      , prev = []
+      }
+    , Cmd.none
+    )
 
 
 
@@ -21,12 +51,46 @@ init =
 
 
 type Msg
-    = NoOp
+    = Next
+    | Prev
+
+
+prevSlide : Model -> Model
+prevSlide model =
+    case model.prev of
+        x :: xs ->
+            { model
+                | prev = xs
+                , current = x
+                , next = model.current :: model.next
+            }
+
+        [] ->
+            model
+
+
+nextSlide : Model -> Model
+nextSlide model =
+    case model.next of
+        x :: xs ->
+            { model
+                | next = xs
+                , current = x
+                , prev = model.current :: model.prev
+            }
+
+        [] ->
+            model
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    ( model, Cmd.none )
+    case msg of
+        Next ->
+            ( nextSlide model, Cmd.none )
+
+        Prev ->
+            ( prevSlide model, Cmd.none )
 
 
 
@@ -36,8 +100,11 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div []
-        [ img [ src "/logo.svg" ] []
-        , h1 [] [ text "Your Elm App is working!" ]
+        [ h1 [] [ text model.current.title ]
+        , div [] [ text model.current.body ]
+        , a [ href "#", onClick Prev ] [ text "Prev" ]
+        , text " "
+        , a [ href "#", onClick Next ] [ text "Next" ]
         ]
 
 
