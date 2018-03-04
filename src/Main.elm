@@ -20,6 +20,7 @@ import Json.Decode
         , map2
         , string
         )
+import Ports exposing (log)
 
 
 ---- MODEL ----
@@ -98,8 +99,13 @@ pure m =
     ( m, Cmd.none )
 
 
-(>=>) : ( Model, Cmd Msg ) -> (Model -> Model) -> ( Model, Cmd Msg )
-(>=>) m f =
+(->-) : ( Model, Cmd Msg ) -> Cmd Msg -> ( Model, Cmd Msg )
+(->-) m cmd =
+    m >>= \model -> ( model, cmd )
+
+
+(>>-) : ( Model, Cmd Msg ) -> (Model -> Model) -> ( Model, Cmd Msg )
+(>>-) m f =
     m >>= (lift f)
 
 
@@ -115,15 +121,22 @@ pure m =
         ( newModel, Cmd.batch [ cmd, newCmd ] )
 
 
-handleClicks : Msg -> Model -> ( Model, Cmd Msg )
-handleClicks msg model =
+moveAround : Msg -> Model -> Model
+moveAround msg model =
     case msg of
         Next ->
-            pure <| nextSlide model
+            nextSlide model
 
         Prev ->
-            pure <| prevSlide model
+            prevSlide model
 
+        _ ->
+            model
+
+
+makeRequests : Msg -> Model -> ( Model, Cmd Msg )
+makeRequests msg model =
+    case msg of
         Refresh ->
             ( model, getSlides )
 
@@ -149,11 +162,29 @@ setSlides msg model =
             model
 
 
+logModel : Model -> ( Model, Cmd Msg )
+logModel model =
+    ( model, log (toString model) )
+
+
+mempty : Model
+mempty =
+    Model (Slide "" "") [] []
+
+
+logMessage : Msg -> Cmd Msg
+logMessage msg =
+    log (toString msg)
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     pure model
-        >>= handleClicks msg
-        >=> setSlides msg
+        >>= makeRequests msg
+        >>- moveAround msg
+        >>- setSlides msg
+        >>= logModel
+        ->- logMessage msg
 
 
 
