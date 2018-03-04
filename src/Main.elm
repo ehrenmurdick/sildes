@@ -95,18 +95,23 @@ fmap f c =
         ( f msg mod, msg, cmd )
 
 
-(>$>) : ( Model, Msg, Cmd Msg ) -> (Msg -> Model -> Model) -> ( Model, Msg, Cmd Msg )
-(>$>) m f =
+(>>$) : ( Model, Msg, Cmd Msg ) -> (Msg -> Model -> Model) -> ( Model, Msg, Cmd Msg )
+(>>$) m f =
     fmap f m
 
 
-(->-) : ( Model, Msg, Cmd Msg ) -> (Msg -> Cmd Msg) -> ( Model, Msg, Cmd Msg )
-(->-) m f =
+bindMessage : ( Model, Msg, Cmd Msg ) -> (Msg -> Cmd Msg) -> ( Model, Msg, Cmd Msg )
+bindMessage m f =
     m >>= \msg model -> ( model, (f msg) )
 
 
-(>>=) : ( Model, Msg, Cmd Msg ) -> (Msg -> Model -> ( Model, Cmd Msg )) -> ( Model, Msg, Cmd Msg )
-(>>=) m f =
+(>>-) : ( Model, Msg, Cmd Msg ) -> (Msg -> Cmd Msg) -> ( Model, Msg, Cmd Msg )
+(>>-) =
+    bindMessage
+
+
+bindContext : ( Model, Msg, Cmd Msg ) -> (Msg -> Model -> ( Model, Cmd Msg )) -> ( Model, Msg, Cmd Msg )
+bindContext m f =
     let
         ( model, msg, cmd ) =
             m
@@ -115,6 +120,11 @@ fmap f c =
             f msg model
     in
         ( newModel, msg, Cmd.batch [ cmd, newCmd ] )
+
+
+(>>=) : ( Model, Msg, Cmd Msg ) -> (Msg -> Model -> ( Model, Cmd Msg )) -> ( Model, Msg, Cmd Msg )
+(>>=) =
+    bindContext
 
 
 moveAround : Msg -> Model -> Model
@@ -185,13 +195,14 @@ runUpdate mmc =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     ( model, msg, Cmd.none )
-        ->- makeRequests
-        ->- traceMessage
-        --
-        >$> moveAround
-        >$> setSlides
-        --
-        >>= traceModel "after render"
+        -- bind message only
+        >>- makeRequests
+        >>- traceMessage
+        -- update model only
+        >>$ moveAround
+        >>$ setSlides
+        -- bind everything
+        >>= traceModel "update done"
         --
         |> runUpdate
 
