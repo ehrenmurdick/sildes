@@ -3,7 +3,15 @@ module Monad exposing (..)
 import Ports exposing (log)
 
 
-fmap : (msg -> model -> model) -> ( model, msg, Cmd msg ) -> ( model, msg, Cmd msg )
+type alias Context msg model =
+    ( model, msg, Cmd msg )
+
+
+type alias UpdateFunc msg model =
+    msg -> model -> model
+
+
+fmap : UpdateFunc msg model -> Context msg model -> Context msg model
 fmap f c =
     let
         ( mod, msg, cmd ) =
@@ -12,22 +20,22 @@ fmap f c =
         ( f msg mod, msg, cmd )
 
 
-(>>$) : ( model, msg, Cmd msg ) -> (msg -> model -> model) -> ( model, msg, Cmd msg )
+(>>$) : Context msg model -> UpdateFunc msg model -> Context msg model
 (>>$) m f =
     fmap f m
 
 
-bindMessage : ( model, msg, Cmd msg ) -> (msg -> Cmd msg) -> ( model, msg, Cmd msg )
+bindMessage : Context msg model -> (msg -> Cmd msg) -> Context msg model
 bindMessage m f =
     m >>= \msg model -> ( model, (f msg) )
 
 
-(>>-) : ( model, msg, Cmd msg ) -> (msg -> Cmd msg) -> ( model, msg, Cmd msg )
+(>>-) : Context msg model -> (msg -> Cmd msg) -> Context msg model
 (>>-) =
     bindMessage
 
 
-bindContext : ( model, msg, Cmd msg ) -> (msg -> model -> ( model, Cmd msg )) -> ( model, msg, Cmd msg )
+bindContext : Context msg model -> (msg -> model -> ( model, Cmd msg )) -> Context msg model
 bindContext m f =
     let
         ( model, msg, cmd ) =
@@ -39,7 +47,7 @@ bindContext m f =
         ( newmodel, msg, Cmd.batch [ cmd, newCmd ] )
 
 
-(>>=) : ( model, msg, Cmd msg ) -> (msg -> model -> ( model, Cmd msg )) -> ( model, msg, Cmd msg )
+(>>=) : Context msg model -> (msg -> model -> ( model, Cmd msg )) -> Context msg model
 (>>=) =
     bindContext
 
@@ -59,7 +67,7 @@ traceMessage msg =
     log (toString msg)
 
 
-runUpdate : ( model, msg, Cmd msg ) -> ( model, Cmd msg )
+runUpdate : Context msg model -> ( model, Cmd msg )
 runUpdate mmc =
     let
         ( mod, msg, cmd ) =

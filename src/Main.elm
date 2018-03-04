@@ -21,22 +21,9 @@ import Types
 import Update exposing (update)
 
 
----- MODEL ----
-
-
 init : ( Model, Cmd Msg )
 init =
-    ( (Model
-        (Slide "" "")
-        []
-        []
-      )
-    , getSlides
-    )
-
-
-
----- VIEW ----
+    ( (Model (Slide "" "") [] []), getSlides )
 
 
 view : Model -> Html Msg
@@ -54,10 +41,6 @@ view model =
             , text " "
             , a [ href "#", onClick Next ] [ text "Next" ]
             ]
-
-
-
-----
 
 
 main : Program Never Model Msg

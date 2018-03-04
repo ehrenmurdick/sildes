@@ -16,15 +16,15 @@ import Monad
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     ( model, msg, Cmd.none )
-        -- bind message only
+        -- side effects
         >>- makeRequests
         >>- traceMessage
-        -- update model only
+        >>= traceModel "before update"
+        -- update model
         >>$ moveAround
         >>$ setSlides
-        -- bind everything
-        >>= traceModel "update done"
         --
+        >>= traceModel "after update"
         |> runUpdate
 
 
