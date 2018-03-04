@@ -1,6 +1,6 @@
 module Update exposing (..)
 
-import Types exposing (Model(..), Msg(..), Slide(..))
+import Types exposing (Model, Msg(..), Slide(..))
 import Network exposing (getSlides)
 import Markdown exposing (toHtml)
 import Monad
@@ -47,22 +47,15 @@ renderSlide slide =
 renderCurrentSlide : Msg -> Model -> Model
 renderCurrentSlide _ model =
     let
-        (Model slide xs ys) =
-            model
-
         newSlide =
-            renderSlide slide
+            renderSlide model.current
     in
-        (Model newSlide xs ys)
+        { model | current = newSlide }
 
 
 flipM : Model -> Model
 flipM model =
-    let
-        (Model x n p) =
-            model
-    in
-        (Model x p n)
+    { model | next = model.prev, prev = model.next }
 
 
 prevSlide : Model -> Model
@@ -72,16 +65,16 @@ prevSlide =
 
 nextSlide : Model -> Model
 nextSlide model =
-    let
-        (Model current next prev) =
-            model
-    in
-        case next of
-            x :: xs ->
-                (Model x xs (current :: prev))
+    case model.next of
+        x :: xs ->
+            { model
+                | current = x
+                , next = xs
+                , prev = model.current :: model.prev
+            }
 
-            [] ->
-                model
+        [] ->
+            model
 
 
 moveAround : Msg -> Model -> Model

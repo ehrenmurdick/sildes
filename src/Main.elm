@@ -15,7 +15,7 @@ import Network exposing (getSlides)
 import Types
     exposing
         ( Slide(..)
-        , Model(..)
+        , Model
         , Msg(..)
         )
 import Update exposing (update)
@@ -48,19 +48,15 @@ slideTitle slide =
 
 view : Model -> Html Msg
 view model =
-    let
-        (Model current _ _) =
-            model
-    in
-        div []
-            [ h1 [] [ slideTitle current ]
-            , div [] [ renderSlide current ]
-            , a [ href "#", onClick Prev ] [ text "Prev" ]
-            , text " "
-            , a [ href "#", onClick Refresh ] [ text "Refresh" ]
-            , text " "
-            , a [ href "#", onClick Next ] [ text "Next" ]
-            ]
+    div []
+        [ h1 [] [ slideTitle model.current ]
+        , div [] [ renderSlide model.current ]
+        , a [ href "#", onClick Prev ] [ text "Prev" ]
+        , text " "
+        , a [ href "#", onClick Refresh ] [ text "Refresh" ]
+        , text " "
+        , a [ href "#", onClick Next ] [ text "Next" ]
+        ]
 
 
 main : Program Never Model Msg

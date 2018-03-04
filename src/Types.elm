@@ -15,12 +15,13 @@ type Slide
         }
 
 
-type Model
-    = Model Slide (List Slide) (List Slide)
+type alias Model =
+    { current : Slide, next : List Slide, prev : List Slide }
 
 
 type Msg
     = Next
     | Prev
     | Refresh
+    | Edit
     | GetSlides (Result Http.Error (List Slide))
