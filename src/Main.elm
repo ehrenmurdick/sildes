@@ -58,8 +58,8 @@ type Msg
     | GetSlides (Result Http.Error (List Slide))
 
 
-flip : Model -> Model
-flip model =
+flipM : Model -> Model
+flipM model =
     let
         (Model x n p) =
             model
@@ -68,11 +68,8 @@ flip model =
 
 
 prevSlide : Model -> Model
-prevSlide model =
-    model
-        |> flip
-        |> nextSlide
-        |> flip
+prevSlide =
+    flipM >> nextSlide >> flipM
 
 
 nextSlide : Model -> Model
@@ -89,19 +86,23 @@ nextSlide model =
                 model
 
 
-lift : (Msg -> Model -> Model) -> Msg -> Model -> ( Model, Cmd Msg )
-lift f msg m =
-    ( f msg m, Cmd.none )
+fmap : (Msg -> Model -> Model) -> ( Model, Msg, Cmd Msg ) -> ( Model, Msg, Cmd Msg )
+fmap f c =
+    let
+        ( mod, msg, cmd ) =
+            c
+    in
+        ( f msg mod, msg, cmd )
+
+
+($>) : ( Model, Msg, Cmd Msg ) -> (Msg -> Model -> Model) -> ( Model, Msg, Cmd Msg )
+($>) m f =
+    fmap f m
 
 
 (->-) : ( Model, Msg, Cmd Msg ) -> (Msg -> Cmd Msg) -> ( Model, Msg, Cmd Msg )
 (->-) m f =
     m >>= \msg model -> ( model, (f msg) )
-
-
-(>>-) : ( Model, Msg, Cmd Msg ) -> (Msg -> Model -> Model) -> ( Model, Msg, Cmd Msg )
-(>>-) m f =
-    m >>= (lift f)
 
 
 (>>=) : ( Model, Msg, Cmd Msg ) -> (Msg -> Model -> ( Model, Cmd Msg )) -> ( Model, Msg, Cmd Msg )
@@ -162,11 +163,6 @@ logModel msg model =
     ( model, log (toString model) )
 
 
-mempty : Model
-mempty =
-    Model (Slide "" "") [] []
-
-
 logMessage : Msg -> Cmd Msg
 logMessage msg =
     log (toString msg)
@@ -186,8 +182,8 @@ update msg model =
     ( model, msg, Cmd.none )
         ->- makeRequests
         ->- logMessage
-        >>- moveAround
-        >>- setSlides
+        $> moveAround
+        $> setSlides
         >>= logModel
         |> runUpdate
 
