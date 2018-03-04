@@ -95,8 +95,8 @@ fmap f c =
         ( f msg mod, msg, cmd )
 
 
-($>) : ( Model, Msg, Cmd Msg ) -> (Msg -> Model -> Model) -> ( Model, Msg, Cmd Msg )
-($>) m f =
+(>$>) : ( Model, Msg, Cmd Msg ) -> (Msg -> Model -> Model) -> ( Model, Msg, Cmd Msg )
+(>$>) m f =
     fmap f m
 
 
@@ -152,19 +152,24 @@ setSlides msg model =
                     model
 
         GetSlides (Err msg) ->
-            (Model (Slide "Error" (toString msg)) [] [])
+            (Model (Slide "Error" "Error fetching slides") [] [])
 
         _ ->
             model
 
 
-logModel : Msg -> Model -> ( Model, Cmd Msg )
-logModel msg model =
-    ( model, log (toString model) )
+traceModel : String -> Msg -> Model -> ( Model, Cmd Msg )
+traceModel str msg model =
+    ( model
+    , Cmd.batch
+        [ log (toString model)
+        , log str
+        ]
+    )
 
 
-logMessage : Msg -> Cmd Msg
-logMessage msg =
+traceMessage : Msg -> Cmd Msg
+traceMessage msg =
     log (toString msg)
 
 
@@ -181,10 +186,13 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     ( model, msg, Cmd.none )
         ->- makeRequests
-        ->- logMessage
-        $> moveAround
-        $> setSlides
-        >>= logModel
+        ->- traceMessage
+        --
+        >$> moveAround
+        >$> setSlides
+        --
+        >>= traceModel "after render"
+        --
         |> runUpdate
 
 
