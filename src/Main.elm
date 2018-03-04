@@ -89,36 +89,31 @@ nextSlide model =
                 model
 
 
-lift : (Model -> Model) -> Model -> ( Model, Cmd Msg )
-lift f m =
-    ( f m, Cmd.none )
+lift : (Msg -> Model -> Model) -> Msg -> Model -> ( Model, Cmd Msg )
+lift f msg m =
+    ( f msg m, Cmd.none )
 
 
-pure : Model -> ( Model, Cmd Msg )
-pure m =
-    ( m, Cmd.none )
+(->-) : ( Model, Msg, Cmd Msg ) -> (Msg -> Cmd Msg) -> ( Model, Msg, Cmd Msg )
+(->-) m f =
+    m >>= \msg model -> ( model, (f msg) )
 
 
-(->-) : ( Model, Cmd Msg ) -> Cmd Msg -> ( Model, Cmd Msg )
-(->-) m cmd =
-    m >>= \model -> ( model, cmd )
-
-
-(>>-) : ( Model, Cmd Msg ) -> (Model -> Model) -> ( Model, Cmd Msg )
+(>>-) : ( Model, Msg, Cmd Msg ) -> (Msg -> Model -> Model) -> ( Model, Msg, Cmd Msg )
 (>>-) m f =
     m >>= (lift f)
 
 
-(>>=) : ( Model, Cmd Msg ) -> (Model -> ( Model, Cmd Msg )) -> ( Model, Cmd Msg )
+(>>=) : ( Model, Msg, Cmd Msg ) -> (Msg -> Model -> ( Model, Cmd Msg )) -> ( Model, Msg, Cmd Msg )
 (>>=) m f =
     let
-        ( model, cmd ) =
+        ( model, msg, cmd ) =
             m
 
         ( newModel, newCmd ) =
-            f model
+            f msg model
     in
-        ( newModel, Cmd.batch [ cmd, newCmd ] )
+        ( newModel, msg, Cmd.batch [ cmd, newCmd ] )
 
 
 moveAround : Msg -> Model -> Model
@@ -162,8 +157,8 @@ setSlides msg model =
             model
 
 
-logModel : Model -> ( Model, Cmd Msg )
-logModel model =
+logModel : Msg -> Model -> ( Model, Cmd Msg )
+logModel msg model =
     ( model, log (toString model) )
 
 
@@ -177,14 +172,24 @@ logMessage msg =
     log (toString msg)
 
 
+runUpdate : ( Model, Msg, Cmd Msg ) -> ( Model, Cmd Msg )
+runUpdate mmc =
+    let
+        ( mod, msg, cmd ) =
+            mmc
+    in
+        ( mod, cmd )
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    pure model
-        ->- makeRequests msg
-        ->- logMessage msg
-        >>- moveAround msg
-        >>- setSlides msg
+    ( model, msg, Cmd.none )
+        ->- makeRequests
+        ->- logMessage
+        >>- moveAround
+        >>- setSlides
         >>= logModel
+        |> runUpdate
 
 
 
