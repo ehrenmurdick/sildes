@@ -1,0 +1,16 @@
+{
+  "slides": [
+    {
+      "title": "First slide",
+      "body": "this is the first slide"
+    },
+    {
+      "title": "Second slide",
+      "body": "this is the second slide"
+    },
+    {
+      "title": "Third slide",
+      "body": "yet another"
+    }
+  ]
+}

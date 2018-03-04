@@ -11,6 +11,15 @@ import Html
         )
 import Html.Events exposing (onClick)
 import Html.Attributes exposing (href)
+import Http
+import Json.Decode
+    exposing
+        ( Decoder
+        , field
+        , list
+        , map2
+        , string
+        )
 
 
 ---- MODEL ----
@@ -29,19 +38,11 @@ type Model
 init : ( Model, Cmd Msg )
 init =
     ( (Model
-        { title = "Slide one"
-        , body = "This is the first slide"
-        }
-        [ { title = "Hello Slides!"
-          , body = "These slides are record types."
-          }
-        , { title = "Slide two"
-          , body = "Not sure how I feel about that."
-          }
-        ]
+        (Slide "" "")
+        []
         []
       )
-    , Cmd.none
+    , getSlides
     )
 
 
@@ -52,6 +53,7 @@ init =
 type Msg
     = Next
     | Prev
+    | GetSlides (Result Http.Error (List Slide))
 
 
 flip : Model -> Model
@@ -90,9 +92,26 @@ lift f m =
     ( f m, Cmd.none )
 
 
-(>=) : Model -> (Model -> Model) -> ( Model, Cmd Msg )
-(>=) m f =
-    (lift f) m
+pure : Model -> ( Model, Cmd Msg )
+pure m =
+    ( m, Cmd.none )
+
+
+(>=>) : ( Model, Cmd Msg ) -> (Model -> Model) -> ( Model, Cmd Msg )
+(>=>) m f =
+    m >>= (lift f)
+
+
+(>>=) : ( Model, Cmd Msg ) -> (Model -> ( Model, Cmd Msg )) -> ( Model, Cmd Msg )
+(>>=) m f =
+    let
+        ( model, cmd ) =
+            m
+
+        ( newModel, newCmd ) =
+            f model
+    in
+        ( newModel, Cmd.batch [ cmd, newCmd ] )
 
 
 advance : Msg -> Model -> Model
@@ -104,11 +123,33 @@ advance msg model =
         Prev ->
             prevSlide model
 
+        _ ->
+            model
+
+
+setSlides : Msg -> Model -> Model
+setSlides msg model =
+    case msg of
+        GetSlides (Ok slides) ->
+            case slides of
+                x :: xs ->
+                    (Model x xs [])
+
+                _ ->
+                    model
+
+        GetSlides (Err msg) ->
+            (Model (Slide "Error" (toString msg)) [] [])
+
+        _ ->
+            model
+
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    model
-        >= advance msg
+    pure model
+        >=> advance msg
+        >=> setSlides msg
 
 
 
@@ -131,7 +172,35 @@ view model =
 
 
 
----- PROGRAM ----
+---- HTTP ----
+
+
+getSlides : Cmd Msg
+getSlides =
+    let
+        url =
+            "http://localhost:3001/slides"
+
+        request =
+            Http.get url decodeSlides
+    in
+        Http.send GetSlides request
+
+
+decodeSlides : Decoder (List Slide)
+decodeSlides =
+    list decodeSlide
+
+
+decodeSlide : Decoder Slide
+decodeSlide =
+    map2 Slide
+        (field "title" string)
+        (field "body" string)
+
+
+
+----
 
 
 main : Program Never Model Msg
