@@ -134,14 +134,14 @@ moveAround msg model =
             model
 
 
-makeRequests : Msg -> Model -> ( Model, Cmd Msg )
-makeRequests msg model =
+makeRequests : Msg -> Cmd Msg
+makeRequests msg =
     case msg of
         Refresh ->
-            ( model, getSlides )
+            getSlides
 
         _ ->
-            pure model
+            Cmd.none
 
 
 setSlides : Msg -> Model -> Model
@@ -180,11 +180,11 @@ logMessage msg =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     pure model
-        >>= makeRequests msg
+        ->- makeRequests msg
+        ->- logMessage msg
         >>- moveAround msg
         >>- setSlides msg
         >>= logModel
-        ->- logMessage msg
 
 
 
