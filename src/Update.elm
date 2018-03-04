@@ -111,6 +111,26 @@ editSlide slide =
             EditableSlide attrs
 
 
+updateBody : String -> Slide -> Slide
+updateBody body slide =
+    case slide of
+        EditableSlide attrs ->
+            EditableSlide { attrs | body = body }
+
+        _ ->
+            EditableSlide { title = "", body = "" }
+
+
+updateTitle : String -> Slide -> Slide
+updateTitle title slide =
+    case slide of
+        EditableSlide attrs ->
+            EditableSlide { attrs | title = title }
+
+        _ ->
+            EditableSlide { title = "", body = "" }
+
+
 handleInputs : Msg -> Model -> Model
 handleInputs msg model =
     case msg of
@@ -125,6 +145,12 @@ handleInputs msg model =
 
         Save ->
             { model | current = saveSlide model.current }
+
+        SetTitle title ->
+            { model | current = updateTitle title model.current }
+
+        SetBody body ->
+            { model | current = updateBody body model.current }
 
         _ ->
             model
