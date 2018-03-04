@@ -53,6 +53,7 @@ init =
 type Msg
     = Next
     | Prev
+    | Refresh
     | GetSlides (Result Http.Error (List Slide))
 
 
@@ -114,17 +115,20 @@ pure m =
         ( newModel, Cmd.batch [ cmd, newCmd ] )
 
 
-advance : Msg -> Model -> Model
-advance msg model =
+handleClicks : Msg -> Model -> ( Model, Cmd Msg )
+handleClicks msg model =
     case msg of
         Next ->
-            nextSlide model
+            pure <| nextSlide model
 
         Prev ->
-            prevSlide model
+            pure <| prevSlide model
+
+        Refresh ->
+            ( model, getSlides )
 
         _ ->
-            model
+            pure model
 
 
 setSlides : Msg -> Model -> Model
@@ -148,7 +152,7 @@ setSlides msg model =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     pure model
-        >=> advance msg
+        >>= handleClicks msg
         >=> setSlides msg
 
 
@@ -166,6 +170,8 @@ view model =
             [ h1 [] [ text current.title ]
             , div [] [ text current.body ]
             , a [ href "#", onClick Prev ] [ text "Prev" ]
+            , text " "
+            , a [ href "#", onClick Refresh ] [ text "Refresh" ]
             , text " "
             , a [ href "#", onClick Next ] [ text "Next" ]
             ]
