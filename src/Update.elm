@@ -1,5 +1,6 @@
 module Update exposing (..)
 
+import Html exposing (text)
 import Types exposing (Model, Msg(..), Slide(..))
 import Network exposing (getSlides)
 import Markdown exposing (toHtml)
@@ -91,7 +92,7 @@ saveSlide slide =
             slide
 
         EditableSlide attrs ->
-            Slide attrs
+            RenderedSlide attrs
 
 
 editSlide : Slide -> Slide
@@ -101,11 +102,16 @@ editSlide slide =
             (EditableSlide
                 { title = attrs.title
                 , body = attrs.body
+                , renderedBody = attrs.renderedBody
                 }
             )
 
         Slide attrs ->
-            EditableSlide attrs
+            EditableSlide
+                { title = attrs.title
+                , renderedBody = text ""
+                , body = attrs.body
+                }
 
         EditableSlide attrs ->
             EditableSlide attrs
@@ -115,10 +121,10 @@ updateBody : String -> Slide -> Slide
 updateBody body slide =
     case slide of
         EditableSlide attrs ->
-            EditableSlide { attrs | body = body }
+            EditableSlide { attrs | body = body, renderedBody = toHtml [] body }
 
         _ ->
-            EditableSlide { title = "", body = "" }
+            EditableSlide { title = "", body = "", renderedBody = text "" }
 
 
 updateTitle : String -> Slide -> Slide
@@ -128,7 +134,7 @@ updateTitle title slide =
             EditableSlide { attrs | title = title }
 
         _ ->
-            EditableSlide { title = "", body = "" }
+            EditableSlide { title = "", body = "", renderedBody = text "" }
 
 
 handleInputs : Msg -> Model -> Model

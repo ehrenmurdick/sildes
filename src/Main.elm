@@ -40,6 +40,8 @@ renderSlide slide =
             div []
                 [ input [ value attrs.title, onInput SetTitle ] []
                 , br [] []
+                , div [] [ attrs.renderedBody ]
+                , br [] []
                 , textarea [ value attrs.body, onInput SetBody ] []
                 ]
 

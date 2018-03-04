@@ -17,6 +17,7 @@ type Slide
     | EditableSlide
         { title : String
         , body : String
+        , renderedBody : Html Msg
         }
 
 
