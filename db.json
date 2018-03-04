@@ -2,11 +2,11 @@
   "slides": [
     {
       "title": "First slide",
-      "body": "this is the first slide"
+      "body": "this is the *first* slide"
     },
     {
       "title": "Second slide",
-      "body": "this is the second slide"
+      "body": "### making slides \n\n\n this is the _second_ slide"
     },
     {
       "title": "Third slide",

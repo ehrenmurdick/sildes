@@ -14,7 +14,7 @@ import Html.Attributes exposing (href)
 import Network exposing (getSlides)
 import Types
     exposing
-        ( Slide
+        ( Slide(..)
         , Model(..)
         , Msg(..)
         )
@@ -23,7 +23,27 @@ import Update exposing (update)
 
 init : ( Model, Cmd Msg )
 init =
-    ( (Model (Slide "" "") [] []), getSlides )
+    ( (Model (Slide { title = "", body = "" }) [] []), getSlides )
+
+
+renderSlide : Slide -> Html Msg
+renderSlide slide =
+    case slide of
+        RenderedSlide attrs ->
+            attrs.body
+
+        Slide _ ->
+            text "not done rendering"
+
+
+slideTitle : Slide -> Html Msg
+slideTitle slide =
+    case slide of
+        RenderedSlide attrs ->
+            text attrs.title
+
+        Slide attrs ->
+            text attrs.title
 
 
 view : Model -> Html Msg
@@ -33,8 +53,8 @@ view model =
             model
     in
         div []
-            [ h1 [] [ text current.title ]
-            , div [] [ text current.body ]
+            [ h1 [] [ slideTitle current ]
+            , div [] [ renderSlide current ]
             , a [ href "#", onClick Prev ] [ text "Prev" ]
             , text " "
             , a [ href "#", onClick Refresh ] [ text "Refresh" ]

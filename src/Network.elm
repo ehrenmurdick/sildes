@@ -7,9 +7,10 @@ import Json.Decode
         , field
         , list
         , map2
+        , map
         , string
         )
-import Types exposing (Slide, Msg(..))
+import Types exposing (Slide(..), Msg(..))
 
 
 getSlides : Cmd Msg
@@ -29,8 +30,13 @@ decodeSlides =
     list decodeSlide
 
 
+type alias RawSlide =
+    { title : String, body : String }
+
+
 decodeSlide : Decoder Slide
 decodeSlide =
-    map2 Slide
-        (field "title" string)
-        (field "body" string)
+    map Slide <|
+        map2 RawSlide
+            (field "title" string)
+            (field "body" string)

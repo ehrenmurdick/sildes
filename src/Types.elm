@@ -1,12 +1,18 @@
 module Types exposing (..)
 
 import Http
+import Html exposing (Html)
 
 
-type alias Slide =
-    { title : String
-    , body : String
-    }
+type Slide
+    = Slide
+        { title : String
+        , body : String
+        }
+    | RenderedSlide
+        { title : String
+        , body : Html Msg
+        }
 
 
 type Model

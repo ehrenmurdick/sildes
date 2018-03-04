@@ -1,7 +1,8 @@
 module Update exposing (..)
 
-import Types exposing (Model(..), Msg(..), Slide)
+import Types exposing (Model(..), Msg(..), Slide(..))
 import Network exposing (getSlides)
+import Markdown exposing (toHtml)
 import Monad
     exposing
         ( (>>-)
@@ -22,10 +23,37 @@ update msg model =
         >>= traceModel "before update"
         -- update model
         >>$ moveAround
-        >>$ setSlides
+        >>$ handleResponses
+        >>$ renderCurrentSlide
         --
         >>= traceModel "after update"
         |> runUpdate
+
+
+renderSlide : Slide -> Slide
+renderSlide slide =
+    case slide of
+        RenderedSlide attrs ->
+            (RenderedSlide attrs)
+
+        Slide attrs ->
+            (RenderedSlide
+                { title = attrs.title
+                , body = toHtml [] attrs.body
+                }
+            )
+
+
+renderCurrentSlide : Msg -> Model -> Model
+renderCurrentSlide _ model =
+    let
+        (Model slide xs ys) =
+            model
+
+        newSlide =
+            renderSlide slide
+    in
+        (Model newSlide xs ys)
 
 
 flipM : Model -> Model
@@ -79,8 +107,8 @@ makeRequests msg =
             Cmd.none
 
 
-setSlides : Msg -> Model -> Model
-setSlides msg model =
+handleResponses : Msg -> Model -> Model
+handleResponses msg model =
     case msg of
         GetSlides (Ok slides) ->
             case slides of
@@ -91,7 +119,7 @@ setSlides msg model =
                     model
 
         GetSlides (Err msg) ->
-            (Model (Slide "Error" "Error fetching slides") [] [])
+            (Model (Slide { title = "Error", body = "Error fetching slides" }) [] [])
 
         _ ->
             model
