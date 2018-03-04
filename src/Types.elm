@@ -11,12 +11,28 @@ type Slide
         }
     | RenderedSlide
         { title : String
-        , body : Html Msg
+        , body : String
+        , renderedBody : Html Msg
+        }
+    | EditableSlide
+        { title : String
+        , body : String
         }
 
 
 type alias Model =
-    { current : Slide, next : List Slide, prev : List Slide }
+    { current : Slide
+    , next : List Slide
+    , prev : List Slide
+    }
+
+
+emptyModel : Model
+emptyModel =
+    { current = (Slide { title = "", body = "" })
+    , next = []
+    , prev = []
+    }
 
 
 type Msg
@@ -24,4 +40,7 @@ type Msg
     | Prev
     | Refresh
     | Edit
+    | Save
+    | SetTitle String
+    | SetBody String
     | GetSlides (Result Http.Error (List Slide))

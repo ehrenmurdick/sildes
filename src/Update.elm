@@ -22,7 +22,7 @@ update msg model =
         >>- traceMessage
         >>= traceModel "before update"
         -- update model
-        >>$ moveAround
+        >>$ handleInputs
         >>$ handleResponses
         >>$ renderCurrentSlide
         --
@@ -36,10 +36,14 @@ renderSlide slide =
         RenderedSlide attrs ->
             (RenderedSlide attrs)
 
+        EditableSlide attrs ->
+            (EditableSlide attrs)
+
         Slide attrs ->
             (RenderedSlide
                 { title = attrs.title
-                , body = toHtml [] attrs.body
+                , body = attrs.body
+                , renderedBody = toHtml [] attrs.body
                 }
             )
 
@@ -77,14 +81,50 @@ nextSlide model =
             model
 
 
-moveAround : Msg -> Model -> Model
-moveAround msg model =
+saveSlide : Slide -> Slide
+saveSlide slide =
+    case slide of
+        RenderedSlide _ ->
+            slide
+
+        Slide _ ->
+            slide
+
+        EditableSlide attrs ->
+            Slide attrs
+
+
+editSlide : Slide -> Slide
+editSlide slide =
+    case slide of
+        RenderedSlide attrs ->
+            (EditableSlide
+                { title = attrs.title
+                , body = attrs.body
+                }
+            )
+
+        Slide attrs ->
+            EditableSlide attrs
+
+        EditableSlide attrs ->
+            EditableSlide attrs
+
+
+handleInputs : Msg -> Model -> Model
+handleInputs msg model =
     case msg of
         Next ->
             nextSlide model
 
         Prev ->
             prevSlide model
+
+        Edit ->
+            { model | current = editSlide model.current }
+
+        Save ->
+            { model | current = saveSlide model.current }
 
         _ ->
             model
@@ -106,13 +146,15 @@ handleResponses msg model =
         GetSlides (Ok slides) ->
             case slides of
                 x :: xs ->
-                    (Model x xs [])
+                    { model | current = x, next = xs, prev = [] }
 
                 _ ->
                     model
 
         GetSlides (Err msg) ->
-            (Model (Slide { title = "Error", body = "Error fetching slides" }) [] [])
+            { model
+                | current = (Slide { title = "Error", body = "Error fetching slides" })
+            }
 
         _ ->
             model
