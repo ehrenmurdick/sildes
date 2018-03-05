@@ -1,7 +1,14 @@
 module Update exposing (..)
 
 import Html exposing (text)
-import Types exposing (Model, Input(..), Msg(..), Slide(..))
+import Types
+    exposing
+        ( Model
+        , Clicks(..)
+        , FormInput(..)
+        , Msg(..)
+        , Slide(..)
+        )
 import Network exposing (getSlides)
 import Markdown exposing (toHtml)
 import Monad
@@ -21,7 +28,8 @@ update msg model =
         >>= traceMessage
         >>= traceModel "before update"
         -- update model
-        >>= selectInput handleInputs
+        >>= selectFormInput handleFormInput
+        >>= selectClicks handleClicks
         >>= handleResponses
         >>= renderCurrentSlide
         --
@@ -29,10 +37,20 @@ update msg model =
         |> runUpdate
 
 
-selectInput : (Input -> Model -> ( Model, Cmd Msg )) -> Msg -> Model -> ( Model, Cmd Msg )
-selectInput f msg model =
+selectClicks : (Clicks -> Model -> ( Model, Cmd Msg )) -> Msg -> Model -> ( Model, Cmd Msg )
+selectClicks f msg model =
     case msg of
-        Input ip ->
+        Clicks ip ->
+            f ip model
+
+        _ ->
+            ( model, Cmd.none )
+
+
+selectFormInput : (FormInput -> Model -> ( Model, Cmd Msg )) -> Msg -> Model -> ( Model, Cmd Msg )
+selectFormInput f msg model =
+    case msg of
+        FormInput ip ->
             f ip model
 
         _ ->
@@ -145,18 +163,25 @@ updateTitle title slide =
             EditableSlide { title = "", body = "", renderedBody = text "" }
 
 
-handleInputs : Input -> Model -> ( Model, Cmd Msg )
-handleInputs msg model =
+handleClicks : Clicks -> Model -> ( Model, Cmd Msg )
+handleClicks msg model =
     case msg of
         Next ->
             noCmd <| nextSlide model
 
-        Prev ->
-            noCmd <| prevSlide model
-
         Edit ->
             noCmd { model | current = editSlide model.current }
 
+        Prev ->
+            noCmd <| prevSlide model
+
+        Refresh ->
+            ( model, getSlides )
+
+
+handleFormInput : FormInput -> Model -> ( Model, Cmd Msg )
+handleFormInput msg model =
+    case msg of
         Save ->
             noCmd { model | current = saveSlide model.current }
 
@@ -165,9 +190,6 @@ handleInputs msg model =
 
         SetBody body ->
             noCmd { model | current = updateBody body model.current }
-
-        Refresh ->
-            ( model, getSlides )
 
 
 handleResponses : Msg -> Model -> ( Model, Cmd Msg )

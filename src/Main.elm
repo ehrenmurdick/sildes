@@ -21,7 +21,8 @@ import Types
         , Model
         , emptyModel
         , Msg(..)
-        , Input(..)
+        , FormInput(..)
+        , Clicks(..)
         )
 import Update exposing (update)
 
@@ -31,26 +32,36 @@ init =
     ( emptyModel, getSlides )
 
 
-renderSlide : Slide -> Html Input
+renderSlideForm : Slide -> Html FormInput
+renderSlideForm slide =
+    case slide of
+        EditableSlide attrs ->
+            div []
+                [ input [ value attrs.title, onInput SetTitle ] []
+                , br [] []
+                , textarea [ value attrs.body, onInput SetBody ] []
+                , br [] []
+                , a [ href "#", onClick Save ] [ text "Save" ]
+                ]
+
+        _ ->
+            text ""
+
+
+renderSlide : Slide -> Html Clicks
 renderSlide slide =
     case slide of
         RenderedSlide attrs ->
             attrs.renderedBody
 
         EditableSlide attrs ->
-            div []
-                [ input [ value attrs.title, onInput SetTitle ] []
-                , br [] []
-                , div [] [ attrs.renderedBody ]
-                , br [] []
-                , textarea [ value attrs.body, onInput SetBody ] []
-                ]
+            attrs.renderedBody
 
         Slide _ ->
             text "not done rendering"
 
 
-slideTitle : Slide -> Html Input
+slideTitle : Slide -> Html Clicks
 slideTitle slide =
     case slide of
         EditableSlide attrs ->
@@ -75,21 +86,27 @@ editing model =
 
 view : Model -> Html Msg
 view model =
-    Html.map Input <|
-        div []
-            [ h1 [] [ slideTitle model.current ]
-            , div [] [ renderSlide model.current ]
-            , a [ href "#", onClick Prev ] [ text "Prev" ]
-            , text " "
-            , a [ href "#", onClick Refresh ] [ text "Refresh" ]
-            , text " "
-            , if editing model then
-                a [ href "#", onClick Save ] [ text "Save" ]
-              else
-                a [ href "#", onClick Edit ] [ text "Edit" ]
-            , text " "
-            , a [ href "#", onClick Next ] [ text "Next" ]
-            ]
+    div []
+        [ Html.map Clicks <|
+            div []
+                [ h1 [] [ slideTitle model.current ]
+                , div [] [ renderSlide model.current ]
+                , a [ href "#", onClick Prev ] [ text "Prev" ]
+                , text " "
+                , a [ href "#", onClick Refresh ] [ text "Refresh" ]
+                , text " "
+                , if not (editing model) then
+                    a [ href "#", onClick Edit ] [ text "Edit" ]
+                  else
+                    text ""
+
+                -- a [ href "#", onClick Save ] [ text "Save" ]
+                , text " "
+                , a [ href "#", onClick Next ] [ text "Next" ]
+                ]
+        , Html.map FormInput <|
+            div [] [ renderSlideForm model.current ]
+        ]
 
 
 main : Program Never Model Msg
