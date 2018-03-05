@@ -1,16 +1,15 @@
 module Update exposing (..)
 
 import Html exposing (text)
-import Types exposing (Model, Msg(..), Slide(..))
+import Types exposing (Model, Input(..), Msg(..), Slide(..))
 import Network exposing (getSlides)
 import Markdown exposing (toHtml)
 import Monad
     exposing
-        ( (>>-)
-        , (>>$)
-        , (>>=)
+        ( (>>=)
         , runUpdate
         , traceMessage
+        , noCmd
         , traceModel
         )
 
@@ -19,16 +18,25 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     ( model, msg, Cmd.none )
         -- side effects
-        >>- makeRequests
-        >>- traceMessage
+        >>= traceMessage
         >>= traceModel "before update"
         -- update model
-        >>$ handleInputs
-        >>$ handleResponses
-        >>$ renderCurrentSlide
+        >>= selectInput handleInputs
+        >>= handleResponses
+        >>= renderCurrentSlide
         --
         >>= traceModel "after update"
         |> runUpdate
+
+
+selectInput : (Input -> Model -> ( Model, Cmd Msg )) -> Msg -> Model -> ( Model, Cmd Msg )
+selectInput f msg model =
+    case msg of
+        Input ip ->
+            f ip model
+
+        _ ->
+            ( model, Cmd.none )
 
 
 renderSlide : Slide -> Slide
@@ -49,13 +57,13 @@ renderSlide slide =
             )
 
 
-renderCurrentSlide : Msg -> Model -> Model
+renderCurrentSlide : Msg -> Model -> ( Model, Cmd Msg )
 renderCurrentSlide _ model =
     let
         newSlide =
             renderSlide model.current
     in
-        { model | current = newSlide }
+        ( { model | current = newSlide }, Cmd.none )
 
 
 flipM : Model -> Model
@@ -137,44 +145,34 @@ updateTitle title slide =
             EditableSlide { title = "", body = "", renderedBody = text "" }
 
 
-handleInputs : Msg -> Model -> Model
+handleInputs : Input -> Model -> ( Model, Cmd Msg )
 handleInputs msg model =
     case msg of
         Next ->
-            nextSlide model
+            noCmd <| nextSlide model
 
         Prev ->
-            prevSlide model
+            noCmd <| prevSlide model
 
         Edit ->
-            { model | current = editSlide model.current }
+            noCmd { model | current = editSlide model.current }
 
         Save ->
-            { model | current = saveSlide model.current }
+            noCmd { model | current = saveSlide model.current }
 
         SetTitle title ->
-            { model | current = updateTitle title model.current }
+            noCmd { model | current = updateTitle title model.current }
 
         SetBody body ->
-            { model | current = updateBody body model.current }
+            noCmd { model | current = updateBody body model.current }
 
-        _ ->
-            model
-
-
-makeRequests : Msg -> Cmd Msg
-makeRequests msg =
-    case msg of
         Refresh ->
-            getSlides
-
-        _ ->
-            Cmd.none
+            ( model, getSlides )
 
 
-handleResponses : Msg -> Model -> Model
+handleResponses : Msg -> Model -> ( Model, Cmd Msg )
 handleResponses msg model =
-    case msg of
+    ( (case msg of
         GetSlides (Ok slides) ->
             case slides of
                 x :: xs ->
@@ -190,3 +188,6 @@ handleResponses msg model =
 
         _ ->
             model
+      )
+    , Cmd.none
+    )

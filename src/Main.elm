@@ -21,6 +21,7 @@ import Types
         , Model
         , emptyModel
         , Msg(..)
+        , Input(..)
         )
 import Update exposing (update)
 
@@ -30,7 +31,7 @@ init =
     ( emptyModel, getSlides )
 
 
-renderSlide : Slide -> Html Msg
+renderSlide : Slide -> Html Input
 renderSlide slide =
     case slide of
         RenderedSlide attrs ->
@@ -49,7 +50,7 @@ renderSlide slide =
             text "not done rendering"
 
 
-slideTitle : Slide -> Html Msg
+slideTitle : Slide -> Html Input
 slideTitle slide =
     case slide of
         EditableSlide attrs ->
@@ -74,20 +75,21 @@ editing model =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ h1 [] [ slideTitle model.current ]
-        , div [] [ renderSlide model.current ]
-        , a [ href "#", onClick Prev ] [ text "Prev" ]
-        , text " "
-        , a [ href "#", onClick Refresh ] [ text "Refresh" ]
-        , text " "
-        , if editing model then
-            a [ href "#", onClick Save ] [ text "Save" ]
-          else
-            a [ href "#", onClick Edit ] [ text "Edit" ]
-        , text " "
-        , a [ href "#", onClick Next ] [ text "Next" ]
-        ]
+    Html.map Input <|
+        div []
+            [ h1 [] [ slideTitle model.current ]
+            , div [] [ renderSlide model.current ]
+            , a [ href "#", onClick Prev ] [ text "Prev" ]
+            , text " "
+            , a [ href "#", onClick Refresh ] [ text "Refresh" ]
+            , text " "
+            , if editing model then
+                a [ href "#", onClick Save ] [ text "Save" ]
+              else
+                a [ href "#", onClick Edit ] [ text "Edit" ]
+            , text " "
+            , a [ href "#", onClick Next ] [ text "Next" ]
+            ]
 
 
 main : Program Never Model Msg

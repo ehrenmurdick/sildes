@@ -12,12 +12,12 @@ type Slide
     | RenderedSlide
         { title : String
         , body : String
-        , renderedBody : Html Msg
+        , renderedBody : Html Input
         }
     | EditableSlide
         { title : String
         , body : String
-        , renderedBody : Html Msg
+        , renderedBody : Html Input
         }
 
 
@@ -36,12 +36,16 @@ emptyModel =
     }
 
 
-type Msg
+type Input
     = Next
     | Prev
     | Refresh
     | Edit
     | Save
-    | SetTitle String
     | SetBody String
+    | SetTitle String
+
+
+type Msg
+    = Input Input
     | GetSlides (Result Http.Error (List Slide))
