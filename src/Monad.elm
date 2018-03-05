@@ -9,14 +9,14 @@ import Ports exposing (log)
     -> msg
     -> model
     -> ( model, Cmd msg )
-(>=>) g f =
+(>=>) f g =
     \msg model ->
         let
             ( newModel, newCmd ) =
-                f msg model
+                g msg model
 
             ( twoModel, twoCmd ) =
-                g msg newModel
+                f msg newModel
         in
             ( twoModel, Cmd.batch [ newCmd, twoCmd ] )
 
