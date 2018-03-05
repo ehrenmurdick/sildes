@@ -14,9 +14,10 @@ import Markdown exposing (toHtml)
 import Monad
     exposing
         ( (>=>)
-        , traceMessage
-        , sequence
         , noCmd
+        , sequence
+        , trace
+        , traceMessage
         , traceModel
         )
 
@@ -24,6 +25,7 @@ import Monad
 update : Msg -> Model -> ( Model, Cmd Msg )
 update =
     sequence
+        >=> trace "lets get this party started"
         >=> traceMessage
         >=> traceModel "before update"
         >=> selectFormInput handleFormInput

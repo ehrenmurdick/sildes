@@ -9,7 +9,7 @@ import Ports exposing (log)
     -> msg
     -> model
     -> ( model, Cmd msg )
-(>=>) f g =
+(>=>) g f =
     \msg model ->
         let
             ( newModel, newCmd ) =
@@ -29,6 +29,11 @@ sequence msg model =
 noCmd : model -> ( model, Cmd msg )
 noCmd model =
     ( model, Cmd.none )
+
+
+trace : String -> msg -> model -> ( model, Cmd msg )
+trace str msg model =
+    ( model, log str )
 
 
 traceModel : String -> msg -> model -> ( model, Cmd msg )
