@@ -13,28 +13,24 @@ import Network exposing (getSlides)
 import Markdown exposing (toHtml)
 import Monad
     exposing
-        ( (>>=)
-        , runUpdate
+        ( (>=>)
         , traceMessage
+        , sequence
         , noCmd
         , traceModel
         )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    ( model, msg, Cmd.none )
-        -- side effects
-        >>= traceMessage
-        >>= traceModel "before update"
-        -- update model
-        >>= selectFormInput handleFormInput
-        >>= selectClicks handleClicks
-        >>= handleResponses
-        >>= renderCurrentSlide
-        --
-        >>= traceModel "after update"
-        |> runUpdate
+update =
+    sequence
+        >=> traceMessage
+        >=> traceModel "before update"
+        >=> selectFormInput handleFormInput
+        >=> selectClicks handleClicks
+        >=> handleResponses
+        >=> renderCurrentSlide
+        >=> traceModel "after update"
 
 
 selectClicks : (Clicks -> Model -> ( Model, Cmd Msg )) -> Msg -> Model -> ( Model, Cmd Msg )

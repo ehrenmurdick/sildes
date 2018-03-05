@@ -3,25 +3,27 @@ module Monad exposing (..)
 import Ports exposing (log)
 
 
-type alias Context msg model =
-    ( model, msg, Cmd msg )
+(>=>) :
+    (msg -> model -> ( model, Cmd msg ))
+    -> (msg -> model -> ( model, Cmd msg ))
+    -> msg
+    -> model
+    -> ( model, Cmd msg )
+(>=>) f g =
+    \msg model ->
+        let
+            ( newModel, newCmd ) =
+                f msg model
+
+            ( twoModel, twoCmd ) =
+                g msg newModel
+        in
+            ( twoModel, Cmd.batch [ newCmd, twoCmd ] )
 
 
-bindContext : Context msg model -> (msg -> model -> ( model, Cmd msg )) -> Context msg model
-bindContext m f =
-    let
-        ( model, msg, cmd ) =
-            m
-
-        ( newmodel, newCmd ) =
-            f msg model
-    in
-        ( newmodel, msg, Cmd.batch [ cmd, newCmd ] )
-
-
-(>>=) : Context msg model -> (msg -> model -> ( model, Cmd msg )) -> Context msg model
-(>>=) =
-    bindContext
+sequence : msg -> model -> ( model, Cmd msg )
+sequence msg model =
+    ( model, Cmd.none )
 
 
 noCmd : model -> ( model, Cmd msg )
@@ -42,12 +44,3 @@ traceModel str msg model =
 traceMessage : msg -> model -> ( model, Cmd msg )
 traceMessage msg model =
     ( model, log (toString msg) )
-
-
-runUpdate : Context msg model -> ( model, Cmd msg )
-runUpdate mmc =
-    let
-        ( mod, msg, cmd ) =
-            mmc
-    in
-        ( mod, cmd )
