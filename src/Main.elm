@@ -25,6 +25,7 @@ import Types
         , Clicks(..)
         )
 import Update exposing (update)
+import Zipper.List as Z
 
 
 init : ( Model, Cmd Msg )
@@ -76,7 +77,7 @@ slideTitle slide =
 
 editing : Model -> Bool
 editing model =
-    case model.current of
+    case Z.current model of
         EditableSlide _ ->
             True
 
@@ -89,8 +90,8 @@ view model =
     div []
         [ Html.map Clicks <|
             div []
-                [ h1 [] [ slideTitle model.current ]
-                , div [] [ renderSlide model.current ]
+                [ h1 [] [ slideTitle (Z.current model) ]
+                , div [] [ renderSlide (Z.current model) ]
                 , a [ href "#", onClick Prev ] [ text "Prev" ]
                 , text " "
                 , a [ href "#", onClick Refresh ] [ text "Refresh" ]
@@ -105,7 +106,7 @@ view model =
                 , a [ href "#", onClick Next ] [ text "Next" ]
                 ]
         , Html.map FormInput <|
-            div [] [ renderSlideForm model.current ]
+            div [] [ renderSlideForm (Z.current model) ]
         ]
 
 

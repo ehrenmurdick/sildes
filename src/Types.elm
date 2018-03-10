@@ -2,6 +2,7 @@ module Types exposing (..)
 
 import Http
 import Html exposing (Html)
+import Zipper.List as Z
 
 
 type Slide
@@ -22,18 +23,12 @@ type Slide
 
 
 type alias Model =
-    { current : Slide
-    , next : List Slide
-    , prev : List Slide
-    }
+    Z.Zipper Slide
 
 
 emptyModel : Model
 emptyModel =
-    { current = (Slide { title = "", body = "" })
-    , next = []
-    , prev = []
-    }
+    Z.zipper (Slide { title = "", body = "" }) []
 
 
 type FormInput

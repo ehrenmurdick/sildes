@@ -11,6 +11,7 @@ import Types
         )
 import Network exposing (getSlides)
 import Markdown exposing (toHtml)
+import Zipper.List as Z
 import Monad
     exposing
         ( (>=>)
@@ -75,35 +76,7 @@ renderSlide slide =
 
 renderCurrentSlide : Msg -> Model -> ( Model, Cmd Msg )
 renderCurrentSlide _ model =
-    let
-        newSlide =
-            renderSlide model.current
-    in
-        ( { model | current = newSlide }, Cmd.none )
-
-
-flipM : Model -> Model
-flipM model =
-    { model | next = model.prev, prev = model.next }
-
-
-prevSlide : Model -> Model
-prevSlide =
-    flipM >> nextSlide >> flipM
-
-
-nextSlide : Model -> Model
-nextSlide model =
-    case model.next of
-        x :: xs ->
-            { model
-                | current = x
-                , next = xs
-                , prev = model.current :: model.prev
-            }
-
-        [] ->
-            model
+    ( Z.update renderSlide model, Cmd.none )
 
 
 saveSlide : Slide -> Slide
@@ -165,13 +138,13 @@ handleClicks : Clicks -> Model -> ( Model, Cmd Msg )
 handleClicks msg model =
     case msg of
         Next ->
-            noCmd <| nextSlide model
+            noCmd <| Z.next model
 
         Edit ->
-            noCmd { model | current = editSlide model.current }
+            noCmd <| Z.update editSlide model
 
         Prev ->
-            noCmd <| prevSlide model
+            noCmd <| Z.prev model
 
         Refresh ->
             ( model, getSlides )
@@ -181,13 +154,13 @@ handleFormInput : FormInput -> Model -> ( Model, Cmd Msg )
 handleFormInput msg model =
     case msg of
         Save ->
-            noCmd { model | current = saveSlide model.current }
+            noCmd (Z.update saveSlide model)
 
         SetTitle title ->
-            noCmd { model | current = updateTitle title model.current }
+            noCmd (Z.update (updateTitle title) model)
 
         SetBody body ->
-            noCmd { model | current = updateBody body model.current }
+            noCmd (Z.update (updateBody body) model)
 
 
 handleResponses : Msg -> Model -> ( Model, Cmd Msg )
@@ -196,15 +169,13 @@ handleResponses msg model =
         GetSlides (Ok slides) ->
             case slides of
                 x :: xs ->
-                    { model | current = x, next = xs, prev = [] }
+                    Z.zipper x xs
 
                 _ ->
                     model
 
         GetSlides (Err msg) ->
-            { model
-                | current = (Slide { title = "Error", body = "Error fetching slides" })
-            }
+            Z.zipper (Slide { title = "Error", body = "Error fetching slides" }) []
 
         _ ->
             model
