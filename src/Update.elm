@@ -26,14 +26,10 @@ import Monad
 update : Msg -> Model -> ( Model, Cmd Msg )
 update =
     sequence
-        >=> trace "lets get this party started"
-        >=> traceMessage
-        >=> traceModel "before update"
+        >=> renderCurrentSlide
         >=> selectFormInput handleFormInput
         >=> selectClicks handleClicks
         >=> handleResponses
-        >=> renderCurrentSlide
-        >=> traceModel "after update"
 
 
 selectClicks : (Clicks -> Model -> ( Model, Cmd Msg )) -> Msg -> Model -> ( Model, Cmd Msg )
@@ -154,13 +150,16 @@ handleFormInput : FormInput -> Model -> ( Model, Cmd Msg )
 handleFormInput msg model =
     case msg of
         Save ->
-            noCmd (Z.update saveSlide model)
+            noCmd <|
+                Z.update saveSlide model
 
         SetTitle title ->
-            noCmd (Z.update (updateTitle title) model)
+            noCmd <|
+                Z.update (updateTitle title) model
 
         SetBody body ->
-            noCmd (Z.update (updateBody body) model)
+            noCmd <|
+                Z.update (updateBody body) model
 
 
 handleResponses : Msg -> Model -> ( Model, Cmd Msg )
